@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { ChevronUp, ChevronDown, RotateCcw, Flame, BookOpen, Calendar } from 'lucide-react'
+import { ChevronUp, ChevronDown, RotateCcw, Flame, BookOpen, Calendar, Bell, BellOff } from 'lucide-react'
 import { supabase } from './supabase'
 import {
   MEMBERS, WEEKLY_GOAL, DDAY_NAME,
@@ -21,17 +21,81 @@ async function upsertDaily(member: string, date: string, count: number) {
   )
 }
 
+const VAPID_PUBLIC_KEY = 'BBcZ96dnqIT224mwke6p80CM5yJQ7bDWkxOp8Vwx7xJ8OBVYKEJ9OlSRs0w21eLNUxuN-Z2q9ruOQiILjPJdkwI'
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = atob(base64)
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)))
+}
+
+// ── 알림 구독 버튼 ────────────────────────────────────────────────────────────
+function PushButton() {
+  const [status, setStatus] = useState<'idle' | 'subscribed' | 'denied' | 'loading'>('idle')
+
+  useEffect(() => {
+    if (Notification.permission === 'granted') setStatus('subscribed')
+    else if (Notification.permission === 'denied') setStatus('denied')
+  }, [])
+
+  const subscribe = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('이 브라우저는 푸시 알림을 지원하지 않아요.')
+      return
+    }
+    setStatus('loading')
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js')
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') { setStatus('denied'); return }
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      })
+
+      await fetch('/api/register-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      })
+      setStatus('subscribed')
+    } catch {
+      setStatus('idle')
+    }
+  }
+
+  if (status === 'subscribed') return (
+    <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-xl px-3 py-2">
+      <BellOff size={14} /> 알림 구독 중
+    </div>
+  )
+  if (status === 'denied') return (
+    <div className="text-xs text-slate-400">알림이 차단됨 (브라우저 설정에서 허용)</div>
+  )
+  return (
+    <button
+      onClick={subscribe}
+      disabled={status === 'loading'}
+      className="flex items-center gap-2 text-xs bg-blue-500 text-white rounded-xl px-3 py-2 font-semibold"
+    >
+      <Bell size={14} /> {status === 'loading' ? '설정 중...' : '공부 알림 받기'}
+    </button>
+  )
+}
+
 // ── D-Day 배너 ────────────────────────────────────────────────────────────────
 function DDayBanner() {
   const dd = getDDay()
   return (
-    <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-5 flex items-center justify-between shadow-lg">
+    <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl p-5 flex items-center justify-between shadow-lg">
       <div>
         <p className="text-2xl font-black">{DDAY_NAME}</p>
-        <p className="text-indigo-300 text-xs mt-1">2026년 5월 28일</p>
+        <p className="text-blue-200 text-xs mt-1">2026년 5월 28일</p>
       </div>
       <div className="text-right">
-        <p className="text-indigo-200 text-xs font-semibold mb-1">남은 날</p>
+        <p className="text-blue-100 text-xs font-semibold mb-1">남은 날</p>
         <p className="text-5xl font-black tabular-nums">
           {dd > 0 ? `D-${dd}` : dd === 0 ? 'D-Day!' : `D+${Math.abs(dd)}`}
         </p>
@@ -66,8 +130,8 @@ function TodayInput({ todayRecords, onSaved }: { todayRecords: DailyRecord[]; on
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
       <div className="flex items-center gap-2 mb-4">
-        <BookOpen size={18} className="text-indigo-500" />
-        <h2 className="font-bold text-slate-700">오늘 문제 입력</h2>
+        <BookOpen size={18} className="text-blue-500" />
+        <h2 className="font-bold text-slate-700">오늘 푼 문제 입력</h2>
         <span className="ml-auto text-xs text-slate-400">
           {format(new Date(), 'M월 d일')}
         </span>
@@ -80,7 +144,7 @@ function TodayInput({ todayRecords, onSaved }: { todayRecords: DailyRecord[]; on
             key={m}
             onClick={() => setMember(m)}
             className={`px-3 py-1.5 rounded-xl text-sm font-semibold transition-all ${
-              member === m ? 'bg-indigo-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600'
+              member === m ? 'bg-blue-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600'
             }`}
           >
             {m}
@@ -89,17 +153,17 @@ function TodayInput({ todayRecords, onSaved }: { todayRecords: DailyRecord[]; on
       </div>
 
       {/* 숫자 입력 (화살표 + 직접 입력) */}
-      <div className="flex items-center gap-2">
-        <div className="flex flex-col items-center shrink-0">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
           <button
             onClick={() => setCount(c => c + 1)}
-            className="w-9 h-8 rounded-t-xl bg-slate-100 flex items-center justify-center text-slate-600 active:bg-indigo-100 transition-all"
+            className="w-9 h-8 rounded-t-xl bg-slate-100 flex items-center justify-center text-slate-600 active:bg-blue-100 transition-all"
           >
             <ChevronUp size={16} />
           </button>
           <button
             onClick={() => setCount(c => Math.max(0, c - 1))}
-            className="w-9 h-8 rounded-b-xl bg-slate-100 flex items-center justify-center text-slate-600 active:bg-indigo-100 transition-all"
+            className="w-9 h-8 rounded-b-xl bg-slate-100 flex items-center justify-center text-slate-600 active:bg-blue-100 transition-all"
           >
             <ChevronDown size={16} />
           </button>
@@ -109,19 +173,18 @@ function TodayInput({ todayRecords, onSaved }: { todayRecords: DailyRecord[]; on
           min={0}
           value={count}
           onChange={e => setCount(Math.max(0, Number(e.target.value)))}
-          className="flex-1 min-w-0 text-center text-4xl font-black text-indigo-600 bg-indigo-50 rounded-xl py-2 outline-none border-2 border-indigo-100 focus:border-indigo-400 transition-all tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          style={{ flex: 1, minWidth: 0, textAlign: 'center', fontSize: '2.25rem', fontWeight: 900, color: '#2563eb', background: '#eff6ff', borderRadius: '12px', padding: '8px', outline: 'none', border: '2px solid #dbeafe' }}
+          className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
-        <span className="text-slate-500 font-semibold shrink-0">문제</span>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`px-4 py-2.5 rounded-xl font-bold shadow-sm active:scale-95 transition-all text-white shrink-0 ${
-            saved ? 'bg-emerald-500' : 'bg-indigo-500'
-          } disabled:opacity-50`}
-        >
-          {saving ? '...' : saved ? '✓' : '저장'}
-        </button>
+        <span style={{ flexShrink: 0, color: '#64748b', fontWeight: 600 }}>문제</span>
       </div>
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        style={{ width: '100%', marginTop: '10px', padding: '10px', borderRadius: '12px', fontWeight: 700, color: 'white', background: saved ? '#10b981' : '#2563eb', opacity: saving ? 0.5 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
+      >
+        {saving ? '저장 중...' : saved ? '✓ 저장됨' : '저장'}
+      </button>
 
       {existing && (
         <p className="text-xs text-slate-400 mt-2 text-center">
@@ -159,7 +222,7 @@ function WeeklyProgress({ records }: { records: DailyRecord[] }) {
               </div>
               <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${done ? 'bg-emerald-400' : 'bg-indigo-400'}`}
+                  className={`h-full rounded-full transition-all duration-500 ${done ? 'bg-emerald-400' : 'bg-blue-400'}`}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -209,7 +272,7 @@ function MonthlyTable({ records, year, month }: { records: DailyRecord[]; year: 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 overflow-x-auto">
       <div className="flex items-center gap-2 mb-4">
-        <Calendar size={18} className="text-indigo-500" />
+        <Calendar size={18} className="text-blue-500" />
         <h2 className="font-bold text-slate-700">{year}년 {month}월 현황</h2>
       </div>
       <table className="w-full text-sm min-w-[360px]">
@@ -232,7 +295,7 @@ function MonthlyTable({ records, year, month }: { records: DailyRecord[]; year: 
             return (
               <tr key={m} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                 <td className="py-3 pr-3 font-bold text-slate-700">{m}</td>
-                <td className="py-3 px-2 text-center font-black text-indigo-600 text-base">{monthTotal}</td>
+                <td className="py-3 px-2 text-center font-black text-blue-600 text-base">{monthTotal}</td>
                 {weeks.map(w => {
                   const total = getTotal(m, w.start, w.end)
                   const done = total >= WEEKLY_GOAL
@@ -309,7 +372,6 @@ export default function App() {
           <RotateCcw size={16} />
         </button>
       </div>
-
       <DDayBanner />
 
       {isCurrentMonth && <TodayInput todayRecords={todayRecords} onSaved={loadRecords} />}
@@ -337,6 +399,9 @@ export default function App() {
         </>
       )}
 
+      <div className="flex justify-center pb-2">
+        <PushButton />
+      </div>
       <p className="text-center text-xs text-slate-300 pb-6">국시를풀자 2026 · 다같이 파이팅! 💪</p>
     </div>
   )
