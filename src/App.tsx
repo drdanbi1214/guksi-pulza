@@ -182,7 +182,7 @@ function StreakCard({ allRecords }: { allRecords: DailyRecord[] }) {
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
       <div className="flex items-center gap-2 mb-4">
         <Flame size={18} className="text-orange-500" />
-        <h2 className="font-bold text-slate-700">연속 공부 스트릭 🔥</h2>
+        <h2 className="font-bold text-slate-700">매일매일풀자제발 🔥</h2>
       </div>
       <div className="flex gap-2">
         {streaks.map(({ name, streak }) => (
