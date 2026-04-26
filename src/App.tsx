@@ -293,16 +293,23 @@ export default function App() {
 
   const loadRecords = useCallback(async () => {
     setLoading(true)
-    const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
-    const endDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`
+    try {
+      const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`
+      const nextMonth = selectedMonth === 12 ? 1 : selectedMonth + 1
+      const nextYear = selectedMonth === 12 ? selectedYear + 1 : selectedYear
+      const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`
 
-    const [monthRes, allRes] = await Promise.all([
-      supabase.from('guksi_daily_records').select('*').gte('date', startDate).lt('date', endDate).order('date'),
-      supabase.from('guksi_daily_records').select('*').order('date'),
-    ])
-    setRecords(monthRes.data ?? [])
-    setAllRecords(allRes.data ?? [])
-    setLoading(false)
+      const [monthRes, allRes] = await Promise.all([
+        supabase.from('guksi_daily_records').select('*').gte('date', startDate).lt('date', endDate).order('date'),
+        supabase.from('guksi_daily_records').select('*').order('date'),
+      ])
+      setRecords(monthRes.data ?? [])
+      setAllRecords(allRes.data ?? [])
+    } catch (e) {
+      console.error('로드 실패:', e)
+    } finally {
+      setLoading(false)
+    }
   }, [selectedYear, selectedMonth])
 
   useEffect(() => { loadRecords() }, [loadRecords])
