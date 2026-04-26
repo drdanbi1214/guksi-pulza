@@ -25,7 +25,7 @@ async function upsertDaily(member: string, date: string, count: number) {
 function DDayBanner() {
   const dd = getDDay()
   return (
-    <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-5 flex items-center justify-between shadow-lg">
+    <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-5 flex items-center justify-between shadow-lg" style={{ fontFamily: "'Gamja Flower', cursive" }}>
       <div>
         <p className="text-2xl font-black">{DDAY_NAME}</p>
         <p className="text-indigo-300 text-xs mt-1">2026년 5월 28일</p>
