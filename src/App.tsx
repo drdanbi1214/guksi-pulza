@@ -27,8 +27,7 @@ function DDayBanner() {
   return (
     <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-5 flex items-center justify-between shadow-lg">
       <div>
-        <p className="text-indigo-200 text-xs font-semibold uppercase tracking-widest">국가시험</p>
-        <p className="text-2xl font-black mt-0.5">{DDAY_NAME}</p>
+        <p className="text-2xl font-black">{DDAY_NAME}</p>
         <p className="text-indigo-300 text-xs mt-1">2026년 5월 28일</p>
       </div>
       <div className="text-right">
@@ -110,7 +109,7 @@ function TodayInput({ todayRecords, onSaved }: { todayRecords: DailyRecord[]; on
           min={0}
           value={count}
           onChange={e => setCount(Math.max(0, Number(e.target.value)))}
-          className="flex-1 text-center text-4xl font-black text-indigo-600 bg-indigo-50 rounded-xl py-3 outline-none border-2 border-indigo-100 focus:border-indigo-400 transition-all tabular-nums"
+          className="flex-1 text-center text-4xl font-black text-indigo-600 bg-indigo-50 rounded-xl py-3 outline-none border-2 border-indigo-100 focus:border-indigo-400 transition-all tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
         <span className="text-slate-500 font-semibold text-lg">문제</span>
         <button
@@ -360,7 +359,6 @@ export default function App() {
       ) : (
         <>
           <MonthlyTable records={records} year={selectedYear} month={selectedMonth} />
-          <Rankings records={records} year={selectedYear} month={selectedMonth} />
         </>
       )}
 
