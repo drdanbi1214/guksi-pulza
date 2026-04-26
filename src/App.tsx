@@ -25,7 +25,7 @@ async function upsertDaily(member: string, date: string, count: number) {
 function DDayBanner() {
   const dd = getDDay()
   return (
-    <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-5 flex items-center justify-between shadow-lg" style={{ fontFamily: "'Gamja Flower', cursive" }}>
+    <div className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl p-5 flex items-center justify-between shadow-lg">
       <div>
         <p className="text-2xl font-black">{DDAY_NAME}</p>
         <p className="text-indigo-300 text-xs mt-1">2026년 5월 28일</p>
@@ -89,19 +89,19 @@ function TodayInput({ todayRecords, onSaved }: { todayRecords: DailyRecord[]; on
       </div>
 
       {/* 숫자 입력 (화살표 + 직접 입력) */}
-      <div className="flex items-center gap-3">
-        <div className="flex flex-col items-center">
+      <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center shrink-0">
           <button
             onClick={() => setCount(c => c + 1)}
-            className="w-10 h-9 rounded-t-xl bg-slate-100 flex items-center justify-center text-slate-600 active:bg-indigo-100 transition-all"
+            className="w-9 h-8 rounded-t-xl bg-slate-100 flex items-center justify-center text-slate-600 active:bg-indigo-100 transition-all"
           >
-            <ChevronUp size={18} />
+            <ChevronUp size={16} />
           </button>
           <button
             onClick={() => setCount(c => Math.max(0, c - 1))}
-            className="w-10 h-9 rounded-b-xl bg-slate-100 flex items-center justify-center text-slate-600 active:bg-indigo-100 transition-all"
+            className="w-9 h-8 rounded-b-xl bg-slate-100 flex items-center justify-center text-slate-600 active:bg-indigo-100 transition-all"
           >
-            <ChevronDown size={18} />
+            <ChevronDown size={16} />
           </button>
         </div>
         <input
@@ -109,13 +109,13 @@ function TodayInput({ todayRecords, onSaved }: { todayRecords: DailyRecord[]; on
           min={0}
           value={count}
           onChange={e => setCount(Math.max(0, Number(e.target.value)))}
-          className="flex-1 text-center text-4xl font-black text-indigo-600 bg-indigo-50 rounded-xl py-3 outline-none border-2 border-indigo-100 focus:border-indigo-400 transition-all tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          className="flex-1 min-w-0 text-center text-4xl font-black text-indigo-600 bg-indigo-50 rounded-xl py-2 outline-none border-2 border-indigo-100 focus:border-indigo-400 transition-all tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
-        <span className="text-slate-500 font-semibold text-lg">문제</span>
+        <span className="text-slate-500 font-semibold shrink-0">문제</span>
         <button
           onClick={handleSave}
           disabled={saving}
-          className={`px-5 py-3 rounded-xl font-bold shadow-sm active:scale-95 transition-all text-white ${
+          className={`px-4 py-2.5 rounded-xl font-bold shadow-sm active:scale-95 transition-all text-white shrink-0 ${
             saved ? 'bg-emerald-500' : 'bg-indigo-500'
           } disabled:opacity-50`}
         >
@@ -223,7 +223,11 @@ function MonthlyTable({ records, year, month }: { records: DailyRecord[]; year: 
           </tr>
         </thead>
         <tbody>
-          {MEMBERS.map(m => {
+          {[...MEMBERS].sort((a, b) => {
+            const ta = records.filter(r => r.member_name === a).reduce((s, r) => s + r.count, 0)
+            const tb = records.filter(r => r.member_name === b).reduce((s, r) => s + r.count, 0)
+            return tb - ta
+          }).map(m => {
             const monthTotal = records.filter(r => r.member_name === m).reduce((s, r) => s + r.count, 0)
             return (
               <tr key={m} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
