@@ -6,7 +6,6 @@ import {
   getDDay, getWeekRange, getWeekRangeForMonth, toDateStr, getStreakDays,
 } from './utils'
 import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
 
 interface DailyRecord {
   id: string
@@ -71,7 +70,7 @@ function TodayInput({ todayRecords, onSaved }: { todayRecords: DailyRecord[]; on
         <BookOpen size={18} className="text-indigo-500" />
         <h2 className="font-bold text-slate-700">오늘 문제 입력</h2>
         <span className="ml-auto text-xs text-slate-400">
-          {format(new Date(), 'M월 d일 (eee)', { locale: ko })}
+          {format(new Date(), 'M월 d일')}
         </span>
       </div>
 
