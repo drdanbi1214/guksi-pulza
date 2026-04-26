@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { ChevronUp, ChevronDown, RotateCcw, Trophy, Flame, BookOpen, Calendar } from 'lucide-react'
+import { ChevronUp, ChevronDown, RotateCcw, Flame, BookOpen, Calendar } from 'lucide-react'
 import { supabase } from './supabase'
 import {
   MEMBERS, WEEKLY_GOAL, DDAY_NAME,
@@ -251,35 +251,6 @@ function MonthlyTable({ records, year, month }: { records: DailyRecord[]; year: 
 }
 
 // ── 랭킹 ─────────────────────────────────────────────────────────────────────
-function Rankings({ records, year, month }: { records: DailyRecord[]; year: number; month: number }) {
-  const ranked = MEMBERS.map(m => ({
-    name: m,
-    total: records.filter(r => r.member_name === m).reduce((s, r) => s + r.count, 0),
-  })).sort((a, b) => b.total - a.total)
-
-  const medals = ['🥇', '🥈', '🥉']
-  const bgColors = ['bg-yellow-50 border border-yellow-100', 'bg-slate-50', 'bg-slate-50', 'bg-slate-50', 'bg-slate-50']
-
-  return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-      <div className="flex items-center gap-2 mb-4">
-        <Trophy size={18} className="text-yellow-500" />
-        <h2 className="font-bold text-slate-700">{year}년 {month}월 랭킹</h2>
-      </div>
-      <div className="space-y-2">
-        {ranked.map(({ name, total }, i) => (
-          <div key={name} className={`flex items-center gap-3 p-3 rounded-xl ${bgColors[i]}`}>
-            <span className="text-xl w-7">{medals[i] ?? `${i + 1}`}</span>
-            <span className="font-bold text-slate-700 flex-1">{name}</span>
-            <span className="font-black text-xl tabular-nums text-indigo-600">{total}</span>
-            <span className="text-slate-400 text-sm">문제</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // ── 메인 ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const now = new Date()
